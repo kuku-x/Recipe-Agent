@@ -34,7 +34,7 @@ function autoResize() {
 </script>
 
 <template>
-  <div class="bg-white rounded-3xl shadow-xl p-4 border-2 border-secondary/20">
+  <div class="bg-white rounded-3xl shadow-xl p-4">
     <div class="flex gap-3">
       <textarea
         ref="textareaRef"

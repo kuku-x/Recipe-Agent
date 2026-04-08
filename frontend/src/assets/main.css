@@ -14,9 +14,13 @@ body {
   color: #5D4E37;
 }
 
-/* 去掉所有按钮的默认 focus outline */
-button:focus-visible {
-  outline: none;
+/* 去掉所有元素的默认 focus outline */
+*:focus {
+  outline: none !important;
+}
+
+*:focus-visible {
+  outline: none !important;
 }
 
 /* 自定义滚动条 */
