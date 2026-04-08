@@ -10,8 +10,32 @@ const chatStore = useChatStore()
 const showHistory = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
-onMounted(() => {
+onMounted(async () => {
   chatStore.init()
+
+  // 检查后端连接状态
+  try {
+    const res = await fetch('/api/status')
+    if (res.ok) {
+      const data = await res.json()
+      chatStore.isConnected = data.ready
+    }
+  } catch {
+    chatStore.isConnected = false
+  }
+
+  // 定期检查连接状态
+  setInterval(async () => {
+    try {
+      const res = await fetch('/api/status')
+      if (res.ok) {
+        const data = await res.json()
+        chatStore.isConnected = data.ready
+      }
+    } catch {
+      chatStore.isConnected = false
+    }
+  }, 30000) // 每30秒检查一次
 })
 
 function handleSend(message: string) {
@@ -26,6 +50,18 @@ function handleQuickAction(question: string) {
 function scrollToBottom() {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}
+
+async function checkConnection() {
+  try {
+    const res = await fetch('/api/status')
+    if (res.ok) {
+      const data = await res.json()
+      chatStore.isConnected = data.ready
+    }
+  } catch {
+    chatStore.isConnected = false
   }
 }
 </script>
@@ -77,8 +113,15 @@ function scrollToBottom() {
 
         <!-- 状态指示 -->
         <div class="flex items-center gap-2">
-          <div :class="['w-2 h-2 rounded-full', chatStore.isConnected ? 'bg-green-400' : 'bg-gray-300']"></div>
+          <div :class="['w-2 h-2 rounded-full', chatStore.isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400']"></div>
           <span class="text-sm text-coffee/60">{{ chatStore.isConnected ? '已连接' : '未连接' }}</span>
+          <button
+            v-if="!chatStore.isConnected"
+            @click="checkConnection"
+            class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full hover:bg-secondary/30"
+          >
+            重试
+          </button>
         </div>
       </header>
 
@@ -88,9 +131,14 @@ function scrollToBottom() {
         <div v-if="chatStore.currentMessages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
           <div class="text-6xl mb-4 animate-bounce">👨‍🍳</div>
           <h2 class="text-2xl font-bold text-coffee mb-2">你好，我是烹饪助手</h2>
-          <p class="text-coffee/60 mb-6 max-w-md">可以问我任何关于烹饪的问题，比如菜谱、食材搭配、烹饪技巧等</p>
+          <p class="text-coffee/60 mb-2 max-w-md">可以问我任何关于烹饪的问题，比如菜谱、食材搭配、烹饪技巧等</p>
 
-          <QuickActions @select="handleQuickAction" />
+          <!-- 初始化提示 -->
+          <p v-if="!chatStore.isConnected" class="text-sm text-secondary mb-4">
+            🔄 RAG 系统初始化中，首次加载可能需要 1-2 分钟...
+          </p>
+
+          <QuickActions @select="handleQuickAction" :disabled="!chatStore.isConnected" />
         </div>
 
         <!-- 消息列表 -->

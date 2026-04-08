@@ -12,10 +12,18 @@ const isUser = computed(() => props.message.role === 'user')
 <template>
   <div
     :class="[
-      'flex animate-bounce-in',
+      'flex animate-bounce-in gap-3',
       isUser ? 'justify-end' : 'justify-start'
     ]"
   >
+    <!-- 助手头像 -->
+    <div
+      v-if="!isUser"
+      class="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-2xl flex-shrink-0 shadow-lg"
+    >
+      🍳
+    </div>
+
     <div
       :class="[
         'max-w-[75%] px-5 py-3 shadow-lg',
@@ -37,6 +45,14 @@ const isUser = computed(() => props.message.role === 'user')
       >
         {{ new Date(message.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }}
       </p>
+    </div>
+
+    <!-- 用户头像 -->
+    <div
+      v-if="isUser"
+      class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl flex-shrink-0 shadow-lg"
+    >
+      🧑‍🍳
     </div>
   </div>
 </template>

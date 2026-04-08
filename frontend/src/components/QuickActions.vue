@@ -1,5 +1,9 @@
 <script setup lang="ts">
-defineEmits<{
+const props = defineProps<{
+  disabled?: boolean
+}>()
+
+const emit = defineEmits<{
   (e: 'select', question: string): void
 }>()
 
@@ -18,8 +22,14 @@ const quickQuestions = [
     <button
       v-for="q in quickQuestions"
       :key="q.text"
-      @click="$emit('select', q.text)"
-      class="flex items-center gap-2 px-4 py-2 bg-white/70 backdrop-blur rounded-full text-coffee text-sm hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+      @click="!props.disabled && $emit('select', q.text)"
+      :disabled="props.disabled"
+      :class="[
+        'flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all duration-200 shadow-md',
+        props.disabled
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          : 'bg-white/70 backdrop-blur text-coffee hover:bg-primary hover:text-white hover:scale-105 hover:shadow-lg active:scale-95'
+      ]"
     >
       <span>{{ q.icon }}</span>
       <span>{{ q.text }}</span>

@@ -1,5 +1,6 @@
 """
 聊天路由 - 支持 SSE 流式输出
+懒加载 RAG 系统，按需初始化
 """
 
 import json
@@ -10,6 +11,26 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+# 导入放在函数内部，避免启动时加载
+RAGSystem = None
+
+
+def get_rag_system(app):
+    """懒加载获取 RAG 系统"""
+    global RAGSystem
+
+    if not hasattr(app.state, 'rag_system') or app.state.rag_system is None:
+        if RAGSystem is None:
+            from recipe_agent.main import AdvancedGraphRAGSystem
+            RAGSystem = AdvancedGraphRAGSystem()
+            print("正在初始化 RAG 系统...")
+            RAGSystem.initialize_system()
+            RAGSystem.build_knowledge_base()
+            print("RAG 系统初始化完成！")
+            app.state.rag_system = RAGSystem
+
+    return getattr(app.state, 'rag_system', None)
+
 
 class ChatRequest(BaseModel):
     message: str
@@ -18,10 +39,10 @@ class ChatRequest(BaseModel):
 
 async def generate_stream(req: Request, question: str, history: List[Dict[str, str]] = None) -> AsyncGenerator[str, None]:
     """生成流式响应"""
-    rag_system = getattr(req.app.state, "rag_system", None)
+    rag_system = get_rag_system(req.app)
 
     if not rag_system or not rag_system.system_ready:
-        yield json.dumps({"error": "RAG 系统未就绪", "done": True}) + "\n"
+        yield json.dumps({"error": "RAG 系统初始化中，请稍候...", "done": True}) + "\n"
         return
 
     try:
@@ -77,6 +98,18 @@ async def chat(request: ChatRequest, req: Request):
     )
 
 
+@router.get("/status")
+async def get_status(req: Request):
+    """获取 RAG 系统状态"""
+    rag_system = getattr(req.app.state, "rag_system", None)
+    is_ready = rag_system is not None and rag_system.system_ready
+
+    return {
+        "ready": is_ready,
+        "message": "RAG 系统就绪" if is_ready else "RAG 系统初始化中..."
+    }
+
+
 @router.get("/history")
 async def get_history():
     """获取对话历史"""
@@ -87,13 +120,3 @@ async def get_history():
 async def delete_history(session_id: str):
     """删除指定对话历史"""
     return {"success": True, "message": f"对话 {session_id} 已删除"}
-
-
-@router.get("/status")
-async def get_status(req: Request):
-    """获取 RAG 系统状态"""
-    rag_system = getattr(req.app.state, "rag_system", None)
-    return {
-        "ready": rag_system is not None and rag_system.system_ready,
-        "message": "RAG 系统就绪" if (rag_system and rag_system.system_ready) else "RAG 系统未就绪"
-    }
