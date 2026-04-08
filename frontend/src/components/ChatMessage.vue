@@ -33,7 +33,11 @@ const isUser = computed(() => props.message.role === 'user')
       ]"
     >
       <p class="whitespace-pre-wrap break-words leading-relaxed">
-        {{ message.content }}<span v-if="message.isStreaming" class="animate-pulse">...</span>
+        {{ message.content }}<span v-if="message.isStreaming" class="inline-flex gap-0.5 ml-1">
+          <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+          <span class="w-1.5 h-1.5 bg-secondary rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+          <span class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+        </span>
       </p>
       <p
         v-if="!message.isStreaming"

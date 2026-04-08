@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch, nextTick } from 'vue'
 import { useChatStore } from './stores/chat'
 import ChatMessage from './components/ChatMessage.vue'
 import ChatInput from './components/ChatInput.vue'
@@ -9,6 +9,24 @@ import ChatHistory from './components/ChatHistory.vue'
 const chatStore = useChatStore()
 const showHistory = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
+
+// 自动滚动到底部
+function scrollToBottom() {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTo({
+        top: messagesContainer.value.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  })
+}
+
+// 监听消息变化，自动滚动
+watch(
+  () => chatStore.currentMessages.length,
+  () => scrollToBottom()
+)
 
 onMounted(async () => {
   chatStore.init()
@@ -44,13 +62,6 @@ function handleSend(message: string) {
 
 function handleQuickAction(question: string) {
   chatStore.sendMessage(question)
-}
-
-// 滚动到底部
-function scrollToBottom() {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
 }
 
 async function checkConnection() {
