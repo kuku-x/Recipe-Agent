@@ -12,7 +12,7 @@ const isUser = computed(() => props.message.role === 'user')
 <template>
   <div
     :class="[
-      'flex animate-bounce-in gap-3',
+      'flex gap-3',
       isUser ? 'justify-end' : 'justify-start'
     ]"
   >
