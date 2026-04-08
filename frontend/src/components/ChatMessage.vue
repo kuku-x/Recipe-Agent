@@ -55,7 +55,7 @@ const isUser = computed(() => props.message.role === 'user')
       v-if="isUser"
       class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl flex-shrink-0 shadow-lg"
     >
-      🧑‍🍳
+      👨
     </div>
   </div>
 </template>
