@@ -10,22 +10,27 @@ const chatStore = useChatStore()
 const showHistory = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
-// 自动滚动到底部
+// 平滑滚动到底部
+let scrollRAF: number | null = null
 function scrollToBottom() {
-  nextTick(() => {
+  if (scrollRAF) cancelAnimationFrame(scrollRAF)
+  scrollRAF = requestAnimationFrame(() => {
     if (messagesContainer.value) {
       messagesContainer.value.scrollTo({
         top: messagesContainer.value.scrollHeight,
-        behavior: 'smooth'
+        behavior: 'instant'
       })
     }
   })
 }
 
-// 监听消息变化，自动滚动
+// 监听消息变化和加载状态，自动滚动
 watch(
-  () => chatStore.currentMessages.length,
-  () => scrollToBottom()
+  () => [chatStore.currentMessages, chatStore.isLoading] as const,
+  () => {
+    nextTick(() => scrollToBottom())
+  },
+  { deep: true }
 )
 
 onMounted(async () => {
