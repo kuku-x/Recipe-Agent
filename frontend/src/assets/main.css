@@ -14,6 +14,11 @@ body {
   color: #5D4E37;
 }
 
+/* 去掉所有按钮的默认 focus outline */
+button:focus-visible {
+  outline: none;
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;

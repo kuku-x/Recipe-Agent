@@ -43,7 +43,7 @@ function autoResize() {
         @input="autoResize"
         placeholder="问问菜谱..."
         rows="1"
-        class="flex-1 resize-none bg-cream/50 rounded-2xl px-4 py-3 text-coffee placeholder-coffee/40 focus:outline-none focus:ring-2 focus:ring-primary/50"
+        class="flex-1 resize-none bg-cream/50 rounded-2xl px-4 py-3 text-coffee placeholder-coffee/40 focus:outline-none focus:ring-0"
       />
       <button
         @click="handleSend"
