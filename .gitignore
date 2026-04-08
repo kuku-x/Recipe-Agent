@@ -13,6 +13,19 @@ build/
 .venv/
 venv/
 ENV/
+recipe_agent/
+
+# Node.js
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Frontend build
+frontend/dist/
+frontend/.DS_Store
 
 # Environment
 .env
@@ -35,6 +48,5 @@ htmlcov/
 Thumbs.db
 
 # Project specific
-*.log
 milvus_data/
 neo4j_data/
