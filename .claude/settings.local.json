@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=d:/project/recipe-agent/src python -c \"from recipe_agent.config import GraphRAGConfig; print\\('GraphRAGConfig OK'\\)\")"
+    ]
+  }
+}
