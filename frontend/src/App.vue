@@ -159,18 +159,6 @@ async function checkConnection() {
       <!-- 输入框 -->
       <div class="p-4">
         <ChatInput @send="handleSend" />
-
-        <!-- 加载指示器 -->
-        <div v-if="chatStore.isLoading" class="flex justify-center mt-3">
-          <div class="flex items-center gap-2 text-coffee/60">
-            <div class="flex gap-1">
-              <span class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-              <span class="w-2 h-2 bg-secondary rounded-full animate-bounce" style="animation-delay: 100ms"></span>
-              <span class="w-2 h-2 bg-accent rounded-full animate-bounce" style="animation-delay: 200ms"></span>
-            </div>
-            <span class="text-sm">思考中...</span>
-          </div>
-        </div>
       </div>
     </div>
   </div>

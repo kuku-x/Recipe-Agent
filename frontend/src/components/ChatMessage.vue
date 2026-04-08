@@ -33,8 +33,7 @@ const isUser = computed(() => props.message.role === 'user')
       ]"
     >
       <p class="whitespace-pre-wrap break-words leading-relaxed">
-        {{ message.content }}
-        <span v-if="message.isStreaming" class="typing-cursor">|</span>
+        {{ message.content }}<span v-if="message.isStreaming" class="animate-pulse">...</span>
       </p>
       <p
         v-if="!message.isStreaming"
