@@ -31,19 +31,35 @@
 recipe_agent/
 ├── src/recipe_agent/    # RAG 核心模块
 │   ├── rag/             # RAG 检索模块
-│   ├── agent/           # Agent 模块
-│   └── common/          # 公共组件
-├── backend/             # FastAPI 后端
-│   ├── main.py
+│   │   ├── data_preparation.py  # 图形数据准备
+│   │   ├── vector_index.py      # Milvus 向量索引
+│   │   ├── hybrid_retrieval.py  # 混合检索
+│   │   ├── graph_rag.py        # 图 RAG 检索
+│   │   ├── query_router.py     # 智能查询路由
+│   │   └── generation.py       # 答案生成
+│   ├── agent/            # Agent 模块
+│   │   ├── recipe_agent.py     # Kimi 菜谱解析 Agent
+│   │   └── amount_normalizer.py # 食材量标准化
+│   └── common/           # 公共组件
+│       ├── neo4j_client.py  # Neo4j 连接池
+│       ├── llm_service.py   # LLM 服务
+│       └── cache.py       # 缓存工具
+├── backend/              # FastAPI 后端
+│   ├── main.py           # FastAPI 入口
 │   └── routers/
-├── frontend/            # Vue 前端
+│       └── chat.py       # 聊天路由 (SSE 流式)
+├── frontend/             # Vue 前端
 │   ├── src/
 │   │   ├── components/  # Vue 组件
-│   │   ├── stores/      # Pinia 状态管理
-│   │   └── views/       # 页面视图
+│   │   │   ├── ChatMessage.vue   # 消息气泡
+│   │   │   ├── ChatInput.vue     # 输入框
+│   │   │   ├── QuickActions.vue  # 快捷问题
+│   │   │   └── ChatHistory.vue  # 历史记录
+│   │   └── stores/
+│   │       └── chat.ts   # Pinia 状态管理
 │   └── ...
 ├── web/                 # 旧版 Web 服务 (已废弃)
-└── tests/               # 测试
+└── tests/               # 测试目录
 ```
 
 ## 快速开始
@@ -54,28 +70,14 @@ recipe_agent/
 - Node.js 18+
 - Docker (用于 Neo4j 和 Milvus)
 
-### 1. 启动依赖服务
+### 1. 克隆项目
 
 ```bash
-docker start milvus-etcd milvus-minio milvus-standalone
-docker start neo4j-db
+git clone https://github.com/kuku-x/Recipe-Agent.git
+cd Recipe-Agent
 ```
 
-### 2. 安装后端依赖
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-### 3. 安装前端依赖
-
-```bash
-cd frontend
-npm install
-```
-
-### 4. 配置
+### 2. 配置环境变量
 
 复制 `.env.example` 为 `.env`，填入你的 API Key：
 
@@ -85,29 +87,123 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_PASSWORD=all-in-rag
 ```
 
-### 5. 启动
+### 3. 使用 Docker 启动依赖服务 (推荐)
 
 ```bash
-# 终端 1: 启动后端
-cd backend
-uvicorn main:app --reload --port 8000
+docker-compose up -d
+```
 
-# 终端 2: 启动前端
+或手动启动：
+
+```bash
+docker start milvus-etcd milvus-minio milvus-standalone neo4j-db
+```
+
+### 4. 启动后端
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+### 5. 启动前端
+
+```bash
 cd frontend
+npm install
 npm run dev
 ```
 
 访问 http://localhost:5173 即可使用！
 
+## API 文档
+
+后端启动后访问：
+- API 文档: http://localhost:8000/docs
+- 健康检查: http://localhost:8000/health
+
+### 主要接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/chat` | POST | 聊天接口 (SSE 流式) |
+| `/api/status` | GET | 获取 RAG 系统状态 |
+| `/api/history` | GET | 获取对话历史 |
+| `/api/history/{id}` | DELETE | 删除对话 |
+
+### 聊天接口示例
+
+```bash
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "红烧肉怎么做？"}'
+```
+
+## Docker 部署
+
+```bash
+# 构建并启动所有服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f backend
+
+# 停止服务
+docker-compose down
+```
+
 ## 开发
 
 ```bash
-# 后端代码格式化
+# 安装开发依赖
+pip install -e ".[dev]"
+
+# 后端代码检查
 ruff check src/
 
 # 前端构建
 cd frontend
 npm run build
+```
+
+## 架构说明
+
+```
+用户提问
+    │
+    ▼
+┌─────────────────┐
+│  FastAPI 后端    │
+│  /api/chat      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Intelligent     │
+│ QueryRouter     │ ← 分析查询复杂度
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌───────┐  ┌───────┐
+│Hybrid │  │Graph  │
+│Retrieval│ │RAG   │
+└───┬───┘  └───┬───┘
+    │          │
+    └────┬─────┘
+         ▼
+┌─────────────────┐
+│  Moonshot/Kimi  │ ← LLM 生成回答
+└────────┬────────┘
+         │
+         ▼
+    SSE 流式响应
+         │
+         ▼
+┌─────────────────┐
+│   Vue 前端      │ ← 实时显示
+└─────────────────┘
 ```
 
 ## License

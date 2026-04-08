@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, 'src')
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
-from recipe_agent.rag import KimiRecipeAgent, RecipeKnowledgeGraphBuilder
+from recipe_agent.agent import KimiRecipeAgent, RecipeKnowledgeGraphBuilder
 from datetime import datetime
 
 app = Flask(__name__,

@@ -4,8 +4,8 @@
 """
 
 import json
-from typing import List, Dict, Any, AsyncGenerator
-from fastapi import APIRouter, Request, HTTPException
+from typing import List, Dict, AsyncGenerator
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -37,7 +37,7 @@ class ChatRequest(BaseModel):
     history: List[Dict[str, str]] = []
 
 
-async def generate_stream(req: Request, question: str, history: List[Dict[str, str]] = None) -> AsyncGenerator[str, None]:
+async def generate_stream(req: Request, question: str) -> AsyncGenerator[str, None]:
     """生成流式响应"""
     rag_system = get_rag_system(req.app)
 
@@ -61,11 +61,9 @@ async def generate_stream(req: Request, question: str, history: List[Dict[str, s
         if analysis and hasattr(analysis, 'recommended_strategy'):
             strategy_info = f" [使用策略: {analysis.recommended_strategy.value}]"
 
-        full_response = ""
         for chunk_text in rag_system.generation_module.generate_adaptive_answer_stream(
             question, relevant_docs
         ):
-            full_response += chunk_text
             yield json.dumps({"content": chunk_text, "done": False}) + "\n"
 
         # 发送完成信号
@@ -93,7 +91,7 @@ async def chat(request: ChatRequest, req: Request):
     响应: SSE 流式数据
     """
     return StreamingResponse(
-        generate_stream(req, request.message, request.history),
+        generate_stream(req, request.message),
         media_type="application/x-ndjson"
     )
 
